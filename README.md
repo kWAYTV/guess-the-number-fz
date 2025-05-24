@@ -3,9 +3,6 @@
 ## Overview
 "Guess the Number" is a simple yet engaging game designed for the Flipper Zero device. This game challenges players to guess a randomly generated number within a specified range.
 
-## Preview
-[Click me to see a brief video](https://streamable.com/rjfvdi)
-
 ## Boilerplate
 [This app was created using leedave's boilerplate](https://github.com/leedave/flipper-zero-fap-boilerplate)
 
