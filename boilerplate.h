@@ -5,25 +5,19 @@
 #include <gui/gui.h>
 #include <input/input.h>
 #include <stdlib.h>
-#include <assets_icons.h>
 #include <dialogs/dialogs.h>
 #include <notification/notification_messages.h>
 #include <gui/view_dispatcher.h>
 #include <gui/modules/submenu.h>
 #include <gui/scene_manager.h>
 #include <gui/modules/variable_item_list.h>
-#include <gui/modules/button_menu.h>
-#include <gui/modules/dialog_ex.h>
 #include "scenes/boilerplate_scene.h"
 #include "views/boilerplate_startscreen.h"
 #include "views/boilerplate_scene_1.h"
 #include "views/boilerplate_scene_2.h"
 #include "helpers/boilerplate_storage.h"
 
-#define TAG "Boilerplate"
-
-#define SUBGHZ_APP_EXTENSION ".sub"
-#define SUBGHZ_APP_FOLDER    ANY_PATH("subghz")
+#define TAG "GuessTheNumber"
 
 typedef struct {
     Gui* gui;
