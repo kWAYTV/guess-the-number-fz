@@ -1,6 +1,8 @@
 App(
     appid="guess_the_number",
     name="Guess The Number",
+    description="An enhanced number guessing game with progressive feedback, score tracking, and immersive multi-sensory experience.",
+    short_description="Guess the number game for Flipper Zero",
     apptype=FlipperAppType.EXTERNAL,
     entry_point="boilerplate_app",
     cdefines=["APP_BOILERPLATE"],
@@ -15,4 +17,5 @@ App(
     fap_icon_assets="icons",
     fap_category="Games",
     fap_weburl="https://github.com/kWAYTV/guess-the-number-fz",
+    fap_version="1.3",
 )
