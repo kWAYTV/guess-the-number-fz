@@ -41,13 +41,13 @@ void boilerplate_scene_2_draw(Canvas* canvas, BoilerplateScene2Model* model) {
     // Title - compact
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str_aligned(canvas, 64, 0, AlignCenter, AlignTop, "GUESS THE NUMBER");
-    
+
     // Current guess - prominently displayed
     canvas_set_font(canvas, FontPrimary);
     char guessBuffer[10];
     snprintf(guessBuffer, sizeof(guessBuffer), "[ %02d ]", model->player_guess);
     canvas_draw_str_aligned(canvas, 64, 15, AlignCenter, AlignTop, guessBuffer);
-    
+
     // Game feedback message - main feedback area
     if(strlen(model->game_message) > 0) {
         canvas_set_font(canvas, FontSecondary);
@@ -68,8 +68,12 @@ void boilerplate_scene_2_draw(Canvas* canvas, BoilerplateScene2Model* model) {
     canvas_set_font(canvas, FontSecondary);
     char statusBuffer[32];
     if(model->best_score > 0) {
-        snprintf(statusBuffer, sizeof(statusBuffer), "Tries: %d | Best: %d", 
-                model->attempts, model->best_score);
+        snprintf(
+            statusBuffer,
+            sizeof(statusBuffer),
+            "Tries: %d | Best: %d",
+            model->attempts,
+            model->best_score);
     } else {
         snprintf(statusBuffer, sizeof(statusBuffer), "Tries: %d", model->attempts);
     }
