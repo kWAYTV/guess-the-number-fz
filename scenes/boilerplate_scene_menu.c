@@ -15,16 +15,20 @@ void boilerplate_scene_menu_on_enter(void* context) {
     Boilerplate* app = context;
 
     submenu_add_item(
-        app->submenu, "Play", SubmenuIndexScene2, boilerplate_scene_menu_submenu_callback, app);
+        app->submenu,
+        "🎮 Start Game",
+        SubmenuIndexScene2,
+        boilerplate_scene_menu_submenu_callback,
+        app);
     submenu_add_item(
         app->submenu,
-        "How to play",
+        "📖 How to Play",
         SubmenuIndexScene1,
         boilerplate_scene_menu_submenu_callback,
         app);
     submenu_add_item(
         app->submenu,
-        "Settings",
+        "⚙️ Settings",
         SubmenuIndexSettings,
         boilerplate_scene_menu_submenu_callback,
         app);

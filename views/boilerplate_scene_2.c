@@ -19,6 +19,9 @@ typedef struct {
     char* buffer;
     int target_number, player_guess;
     char game_message[50];
+    int attempts;
+    int best_score;
+    bool game_won;
 } BoilerplateScene2Model;
 
 void boilerplate_scene_2_set_callback(
@@ -33,27 +36,54 @@ void boilerplate_scene_2_set_callback(
 
 void boilerplate_scene_2_draw(Canvas* canvas, BoilerplateScene2Model* model) {
     canvas_clear(canvas);
-
     canvas_set_color(canvas, ColorBlack);
+
+    // Title - compact
     canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str_aligned(canvas, 0, 10, AlignLeft, AlignTop, "Guess The Number!");
+    canvas_draw_str_aligned(canvas, 64, 0, AlignCenter, AlignTop, "GUESS THE NUMBER");
+    
+    // Current guess - prominently displayed
+    canvas_set_font(canvas, FontPrimary);
+    char guessBuffer[10];
+    snprintf(guessBuffer, sizeof(guessBuffer), "[ %02d ]", model->player_guess);
+    canvas_draw_str_aligned(canvas, 64, 15, AlignCenter, AlignTop, guessBuffer);
+    
+    // Game feedback message - main feedback area
+    if(strlen(model->game_message) > 0) {
+        canvas_set_font(canvas, FontSecondary);
+        canvas_draw_str_aligned(canvas, 64, 30, AlignCenter, AlignTop, model->game_message);
+    }
 
-    // Draw the player guess
-    canvas_set_font(canvas, FontSecondary);
-    char guessBuffer[50];
-    snprintf(guessBuffer, sizeof(guessBuffer), "Your Guess: %d", model->player_guess);
-    canvas_draw_str_aligned(canvas, 0, 30, AlignLeft, AlignTop, guessBuffer);
+    // Win state handling - different layout when won
+    if(model->game_won) {
+        canvas_set_font(canvas, FontSecondary);
+        canvas_draw_str_aligned(canvas, 64, 40, AlignCenter, AlignTop, "Press BACK for new game");
+    } else {
+        // Show range when playing
+        canvas_set_font(canvas, FontSecondary);
+        canvas_draw_str_aligned(canvas, 64, 40, AlignCenter, AlignTop, "Range: 0-99");
+    }
 
-    // Draw the game message
+    // Bottom status line - always at bottom
     canvas_set_font(canvas, FontSecondary);
-    canvas_draw_str_aligned(canvas, 0, 50, AlignLeft, AlignTop, model->game_message);
+    char statusBuffer[32];
+    if(model->best_score > 0) {
+        snprintf(statusBuffer, sizeof(statusBuffer), "Tries: %d | Best: %d", 
+                model->attempts, model->best_score);
+    } else {
+        snprintf(statusBuffer, sizeof(statusBuffer), "Tries: %d", model->attempts);
+    }
+    canvas_draw_str_aligned(canvas, 64, 54, AlignCenter, AlignTop, statusBuffer);
 }
 
 static void boilerplate_scene_2_model_init(BoilerplateScene2Model* const model) {
-    // Set the target number to a random number between 0 and 100
+    // Set the target number to a random number between 0 and 99
     model->target_number = furi_hal_random_get() % 100;
-    model->player_guess = 50;
-    strcpy(model->game_message, "");
+    model->player_guess = 50; // Start in the middle
+    model->attempts = 0;
+    model->game_won = false;
+    strcpy(model->game_message, "Make your first guess!");
+    // Keep best_score from previous games
     dolphin_deed(DolphinDeedPluginGameStart);
 }
 
@@ -80,9 +110,11 @@ bool boilerplate_scene_2_input(InputEvent* event, void* context) {
             instance->view,
             BoilerplateScene2Model * model,
             {
-                // Reset the game
-                strcpy(model->game_message, "Resetting...");
+                // Reset the game but keep best score
+                int saved_best_score = model->best_score;
+                strcpy(model->game_message, "New game started!");
                 boilerplate_scene_2_model_init(model);
+                model->best_score = saved_best_score; // Restore best score
                 boilerplate_play_long_bump(instance->context);
                 boilerplate_led_set_rgb(instance->context, 0, 0, 255);
             },
@@ -141,19 +173,70 @@ bool boilerplate_scene_2_input(InputEvent* event, void* context) {
                 instance->view,
                 BoilerplateScene2Model * model,
                 {
-                    // Process the guess
-                    if(model->target_number == model->player_guess) {
-                        strcpy(model->game_message, "You win!");
-                        boilerplate_play_win_sound(instance->context);
-                        boilerplate_led_set_rgb(instance->context, 0, 255, 0);
-                        dolphin_deed(DolphinDeedPluginGameWin);
-                    } else {
-                        strcpy(
-                            model->game_message,
-                            model->target_number > model->player_guess ? "Too low!" : "Too high!");
-                        boilerplate_led_set_rgb(instance->context, 255, 0, 0);
+                    if(!model->game_won) {
+                        model->attempts++;
+
+                        // Process the guess
+                        if(model->target_number == model->player_guess) {
+                            model->game_won = true;
+                            snprintf(
+                                model->game_message,
+                                sizeof(model->game_message),
+                                "🎉 Winner! Got it in %d tries!",
+                                model->attempts);
+
+                            // Update best score
+                            if(model->best_score == 0 || model->attempts < model->best_score) {
+                                model->best_score = model->attempts;
+                            }
+
+                            boilerplate_play_win_sound(instance->context);
+                            boilerplate_play_happy_bump(instance->context);
+                            boilerplate_led_set_rgb(instance->context, 0, 255, 0);
+                            dolphin_deed(DolphinDeedPluginGameWin);
+                        } else {
+                            int difference = abs(model->target_number - model->player_guess);
+
+                            if(difference <= 2) {
+                                strcpy(
+                                    model->game_message,
+                                    model->target_number > model->player_guess ?
+                                        "Very close! Go higher!" :
+                                        "Very close! Go lower!");
+                                boilerplate_play_close_sound(instance->context);
+                                boilerplate_play_close_bump(instance->context);
+                                boilerplate_led_set_rgb(
+                                    instance->context, 255, 255, 0); // Yellow for close
+                            } else if(difference <= 5) {
+                                strcpy(
+                                    model->game_message,
+                                    model->target_number > model->player_guess ?
+                                        "Close! Try higher!" :
+                                        "Close! Try lower!");
+                                boilerplate_play_close_sound(instance->context);
+                                boilerplate_play_short_bump(instance->context);
+                                boilerplate_led_set_rgb(
+                                    instance->context, 255, 165, 0); // Orange for somewhat close
+                            } else if(difference <= 15) {
+                                strcpy(
+                                    model->game_message,
+                                    model->target_number > model->player_guess ? "Too low!" :
+                                                                                 "Too high!");
+                                boilerplate_play_error_sound(instance->context);
+                                boilerplate_led_set_rgb(
+                                    instance->context, 255, 0, 0); // Red for wrong
+                            } else {
+                                strcpy(
+                                    model->game_message,
+                                    model->target_number > model->player_guess ? "Way too low!" :
+                                                                                 "Way too high!");
+                                boilerplate_play_error_sound(instance->context);
+                                boilerplate_led_set_rgb(
+                                    instance->context, 255, 0, 0); // Red for very wrong
+                            }
+                        }
+                        boilerplate_play_button_press(instance->context);
                     }
-                    boilerplate_play_button_press(instance->context);
                 },
                 true);
             break;
@@ -183,8 +266,11 @@ bool boilerplate_scene_2_input(InputEvent* event, void* context) {
 
 void boilerplate_scene_2_exit(void* context) {
     furi_assert(context);
-    Boilerplate* app = context;
-    boilerplate_stop_all_sound(app);
+    BoilerplateScene2* instance = context;
+    if(instance->context) {
+        boilerplate_stop_all_sound(instance->context);
+        boilerplate_led_reset(instance->context);
+    }
 }
 
 void boilerplate_scene_2_enter(void* context) {
@@ -199,6 +285,7 @@ BoilerplateScene2* boilerplate_scene_2_alloc() {
     view_set_context(instance->view, instance);
     view_set_draw_callback(instance->view, (ViewDrawCallback)boilerplate_scene_2_draw);
     view_set_input_callback(instance->view, boilerplate_scene_2_input);
+    view_set_enter_callback(instance->view, boilerplate_scene_2_enter);
     view_set_exit_callback(instance->view, boilerplate_scene_2_exit);
 
     with_view_model(

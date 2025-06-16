@@ -84,20 +84,28 @@ void boilerplate_app_free(Boilerplate* app) {
     // Scene manager
     scene_manager_free(app->scene_manager);
 
-    // View Dispatcher
+    // Remove all views from dispatcher
     view_dispatcher_remove_view(app->view_dispatcher, BoilerplateViewIdMenu);
+    view_dispatcher_remove_view(app->view_dispatcher, BoilerplateViewIdStartscreen);
     view_dispatcher_remove_view(app->view_dispatcher, BoilerplateViewIdScene1);
     view_dispatcher_remove_view(app->view_dispatcher, BoilerplateViewIdScene2);
     view_dispatcher_remove_view(app->view_dispatcher, BoilerplateViewIdSettings);
+
+    // Free all allocated views and components
     submenu_free(app->submenu);
+    boilerplate_startscreen_free(app->boilerplate_startscreen);
+    boilerplate_scene_1_free(app->boilerplate_scene_1);
+    boilerplate_scene_2_free(app->boilerplate_scene_2);
+    variable_item_list_free(app->variable_item_list);
 
+    // Free view dispatcher
     view_dispatcher_free(app->view_dispatcher);
+
+    // Close records
     furi_record_close(RECORD_GUI);
+    furi_record_close(RECORD_NOTIFICATION);
 
-    app->gui = NULL;
-    app->notification = NULL;
-
-    //Remove whatever is left
+    // Free app structure
     free(app);
 }
 

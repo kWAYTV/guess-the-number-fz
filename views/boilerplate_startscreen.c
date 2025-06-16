@@ -28,12 +28,23 @@ void boilerplate_startscreen_draw(Canvas* canvas, BoilerplateStartscreenModel* m
     UNUSED(model);
     canvas_clear(canvas);
     canvas_set_color(canvas, ColorBlack);
+
+    // Title
     canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str_aligned(canvas, 64, 10, AlignCenter, AlignTop, "Guess The Number");
+    canvas_draw_str_aligned(canvas, 64, 5, AlignCenter, AlignTop, "GUESS THE NUMBER");
+
+    // Simple decorative line
     canvas_set_font(canvas, FontSecondary);
-    canvas_draw_str_aligned(canvas, 64, 22, AlignCenter, AlignTop, "Guess the correct");
-    canvas_draw_str_aligned(canvas, 64, 32, AlignCenter, AlignTop, "number to win!");
-    elements_button_center(canvas, "Play!");
+    canvas_draw_str_aligned(canvas, 64, 18, AlignCenter, AlignTop, "═══════════════════");
+
+    // Game description
+    canvas_set_font(canvas, FontSecondary);
+    canvas_draw_str_aligned(canvas, 64, 28, AlignCenter, AlignTop, "Find the secret number!");
+    canvas_draw_str_aligned(canvas, 64, 38, AlignCenter, AlignTop, "Range: 0-99");
+
+    // Call to action
+    canvas_set_font(canvas, FontSecondary);
+    canvas_draw_str_aligned(canvas, 64, 52, AlignCenter, AlignTop, "Press any button to start");
 }
 
 static void boilerplate_startscreen_model_init(BoilerplateStartscreenModel* const model) {

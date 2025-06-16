@@ -29,14 +29,18 @@ void boilerplate_scene_1_draw(Canvas* canvas, BoilerplateScene1Model* model) {
     UNUSED(model);
     canvas_clear(canvas);
     canvas_set_color(canvas, ColorBlack);
-    canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str_aligned(canvas, 0, 8, AlignLeft, AlignTop, "Instructions:");
 
+    // Title
+    canvas_set_font(canvas, FontPrimary);
+    canvas_draw_str_aligned(canvas, 64, 2, AlignCenter, AlignTop, "HOW TO PLAY");
+
+    // Instructions with better formatting and icons
     canvas_set_font(canvas, FontSecondary);
-    canvas_draw_str_aligned(canvas, 0, 22, AlignLeft, AlignTop, "Ok - Check guess");
-    canvas_draw_str_aligned(canvas, 0, 32, AlignLeft, AlignTop, "Up/Down - Adjust guess");
-    canvas_draw_str_aligned(canvas, 0, 42, AlignLeft, AlignTop, "Left/Right - Large adjust");
-    canvas_draw_str_aligned(canvas, 0, 52, AlignLeft, AlignTop, "Back - Tap: Reset, Hold: Exit");
+    canvas_draw_str_aligned(canvas, 4, 16, AlignLeft, AlignTop, "🎮 CONTROLS:");
+    canvas_draw_str_aligned(canvas, 4, 26, AlignLeft, AlignTop, "  OK - Submit your guess");
+    canvas_draw_str_aligned(canvas, 4, 36, AlignLeft, AlignTop, "  ↑↓ - Fine tune (+/-1)");
+    canvas_draw_str_aligned(canvas, 4, 46, AlignLeft, AlignTop, "  ←→ - Quick adjust (+/-10)");
+    canvas_draw_str_aligned(canvas, 4, 56, AlignLeft, AlignTop, "  BACK - Tap:Reset | Hold:Exit");
 }
 
 static void boilerplate_scene_1_model_init(BoilerplateScene1Model* const model) {

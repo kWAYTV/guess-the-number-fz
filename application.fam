@@ -1,6 +1,6 @@
 App(
-    appid="guess_the_number_dev",
-    name="Guess The Number (Dev)",
+    appid="guess_the_number",
+    name="Guess The Number",
     apptype=FlipperAppType.EXTERNAL,
     entry_point="boilerplate_app",
     cdefines=["APP_BOILERPLATE"],
