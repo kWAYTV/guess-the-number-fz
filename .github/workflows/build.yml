@@ -107,11 +107,10 @@ jobs:
       - name: Create or update 'latest' release
         uses: softprops/action-gh-release@v2
         with:
-          # This will create a new 'latest' release or update the existing one.
           tag_name: latest
           name: Latest Build (from ${{ steps.release-notes.outputs.short_sha }})
           body_path: ${{ steps.release-notes.outputs.body_path }}
           prerelease: true
-          # The glob pattern finds all .fap files within the subdirectories
-          # created by the download-artifact step.
           files: all_artifacts/**/*.fap
+          make_latest: true
+          generate_release_notes: false
