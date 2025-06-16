@@ -36,7 +36,7 @@ Deploy the file to your Flipper Zero's `apps/Games` directory.
 
 ## 🛠️ Development
 
-Built with [Flipper Zero SDK](https://docs.flipper.io) using [leedave's boilerplate](https://github.com/leedave/flipper-zero-fap-boilerplate).
+Built with Flipper Zero SDK using [leedave's boilerplate](https://github.com/leedave/flipper-zero-fap-boilerplate).
 
 **Build Requirements:**
 
