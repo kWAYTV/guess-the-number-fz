@@ -1,3 +1,7 @@
+# This workflow builds the Flipper Application (FAP) against multiple
+# firmware SDKs to ensure compatibility. It then creates a single
+# GitHub Release containing all the compiled .fap files.
+
 name: "FAP: Build for multiple SDK sources"
 
 on:
@@ -6,62 +10,107 @@ on:
       - main
   pull_request:
   schedule:
-    # every day
+    # Run once a day at 01:01 UTC
     - cron: "1 1 * * *"
 
+# Ensures that only one workflow run for a given branch/ref is running at a time.
+# If a new commit is pushed, the previous run will be cancelled.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  ufbt-build-action:
+  build:
     runs-on: ubuntu-latest
     strategy:
+      # Don't cancel all jobs if one fails. We want to see the results for all SDKs.
+      fail-fast: false
       matrix:
         include:
-          - name: dev channel
+          - name: Official Dev
             sdk-channel: dev
+            sdk-hw-target: f7
 
-          - name: release channel
+          - name: Official Release
             sdk-channel: release
+            sdk-hw-target: f7
 
-          - name: Momentum FW Dev
+          - name: Momentum Dev
             sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
             sdk-channel: dev
             sdk-hw-target: f7
 
-          - name: Momentum FW Release
+          - name: Momentum Release
             sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
             sdk-channel: release
             sdk-hw-target: f7
 
-    name: "ufbt: Build for ${{ matrix.name }}"
+    name: "Build for ${{ matrix.name }}"
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build with ufbt
+      - name: Build FAP with ufbt
         uses: flipperdevices/flipperzero-ufbt-action@v0.1
         id: build-app
         with:
           sdk-channel: ${{ matrix.sdk-channel }}
           sdk-index-url: ${{ matrix.sdk-index-url }}
+          sdk-hw-target: ${{ matrix.sdk-hw-target }}
 
-      - name: Upload app artifacts
+      # The ufbt action outputs files with standard names (e.g., my_app.fap).
+      # To avoid conflicts when creating a release with all artifacts, we must
+      # rename each file to be unique. We append the build suffix provided by
+      # the action (e.g., my_app-f7-dev-0.100.0.fap).
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p dist
+          for fap_path in ${{ steps.build-app.outputs.fap-artifacts }}; do
+            filename=$(basename "$fap_path")
+            if [[ "$filename" == *.fap ]]; then
+              # Rename .fap files to include the unique build suffix
+              new_filename="${filename%.fap}-${{ steps.build-app.outputs.suffix }}.fap"
+              cp "$fap_path" "dist/$new_filename"
+            else
+              # Copy other files (like application.fam) as-is
+              cp "$fap_path" "dist/$filename"
+            fi
+          done
+
+      - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
-          path: ${{ steps.build-app.outputs.fap-artifacts }}
+          name: FAP-${{ steps.build-app.outputs.suffix }}
+          path: dist/
 
-      - name: Upload to release
-        uses: softprops/action-gh-release@v1
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  release:
+    # This job only runs on pushes to the 'main' branch, after all build jobs succeed.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
         with:
-          tag_name: latest
-          name: Latest Build
-          prerelease: true
-          files: ${{ steps.build-app.outputs.fap-artifacts }}
-          body: |
-            Automated build from commit ${{ github.sha }}
+          # Download all artifacts from this workflow run into the 'all_artifacts' directory
+          path: all_artifacts
 
-            Built for: ${{ matrix.name }}
+      - name: Prepare Release Notes
+        id: release-notes
+        run: |
+          echo "### Built Files" > release_body.md
+          # Find all .fap files, get their base names, sort them, and format as a list
+          find all_artifacts -type f -name "*.fap" -exec basename {} \; | sort | sed 's/^/- /' >> release_body.md
+          echo "body_path=release_body.md" >> $GITHUB_OUTPUT
+
+      - name: Create or update 'latest' release
+        uses: softprops/action-gh-release@v2
+        with:
+          # This will create a new 'latest' release or update the existing one.
+          tag_name: latest
+          name: Latest Build (from ${{ GITHUB.SHA_SHORT }})
+          body_path: ${{ steps.release-notes.outputs.body_path }}
+          prerelease: true
+          # The glob pattern finds all .fap files within the subdirectories
+          # created by the download-artifact step.
+          files: all_artifacts/**/*.fap
