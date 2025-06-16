@@ -102,13 +102,14 @@ jobs:
           # Find all .fap files, get their base names, sort them, and format as a list
           find all_artifacts -type f -name "*.fap" -exec basename {} \; | sort | sed 's/^/- /' >> release_body.md
           echo "body_path=release_body.md" >> $GITHUB_OUTPUT
+          echo "short_sha=${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
 
       - name: Create or update 'latest' release
         uses: softprops/action-gh-release@v2
         with:
           # This will create a new 'latest' release or update the existing one.
           tag_name: latest
-          name: Latest Build (from ${{ GITHUB.SHA_SHORT }})
+          name: Latest Build (from ${{ steps.release-notes.outputs.short_sha }})
           body_path: ${{ steps.release-notes.outputs.body_path }}
           prerelease: true
           # The glob pattern finds all .fap files within the subdirectories
