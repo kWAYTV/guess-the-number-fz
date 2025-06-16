@@ -23,14 +23,16 @@ Guess the secret number (0-99) in the fewest attempts possible. The game provide
 
 ## 🚀 Installation
 
-```bash
-git clone https://github.com/kWAYTV/guess-the-number-fz
-cd guess-the-number-fz
-ufbt update --index-url=https://up.momentum-fw.dev/firmware/directory.json --hw-target=f7 --channel=dev
-ufbt
-```
+### Pre-built Releases (Recommended)
 
-Deploy the generated `.fap` file to your Flipper Zero's `apps/Games` directory.
+Download the appropriate `.fap` file for your firmware from the [latest release](https://github.com/kWAYTV/guess-the-number-fz/releases/latest):
+
+- `guess_the_number_official-dev.fap` - Official Dev firmware
+- `guess_the_number_official-release.fap` - Official Release firmware
+- `guess_the_number_momentum-dev.fap` - Momentum Dev firmware
+- `guess_the_number_momentum-release.fap` - Momentum Release firmware
+
+Deploy the file to your Flipper Zero's `apps/Games` directory.
 
 ## 🛠️ Development
 
@@ -40,6 +42,15 @@ Built with [Flipper Zero SDK](https://docs.flipper.io) using [leedave's boilerpl
 
 - [uFBT](https://github.com/flipperdevices/flipperzero-ufbt)
 - Flipper Zero firmware API v86.0+
+
+### Build from Source
+
+```bash
+git clone https://github.com/kWAYTV/guess-the-number-fz
+cd guess-the-number-fz
+ufbt update --index-url=https://up.momentum-fw.dev/firmware/directory.json --hw-target=f7 --channel=dev
+ufbt
+```
 
 ## 📄 License
 
