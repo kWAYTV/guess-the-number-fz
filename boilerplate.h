@@ -23,7 +23,7 @@
 #define TAG "Boilerplate"
 
 #define SUBGHZ_APP_EXTENSION ".sub"
-#define SUBGHZ_APP_FOLDER ANY_PATH("subghz")
+#define SUBGHZ_APP_FOLDER    ANY_PATH("subghz")
 
 typedef struct {
     Gui* gui;
@@ -35,7 +35,7 @@ typedef struct {
     BoilerplateStartscreen* boilerplate_startscreen;
     BoilerplateScene1* boilerplate_scene_1;
     BoilerplateScene2* boilerplate_scene_2;
-    uint32_t haptic; 
+    uint32_t haptic;
     uint32_t speaker;
     uint32_t led;
     uint32_t save_settings;

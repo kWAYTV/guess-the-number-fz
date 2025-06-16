@@ -1,20 +1,50 @@
-name: "FAP: Build (XFW-DEV)"
-on: [push, pull_request]
+name: "FAP: Build for multiple SDK sources"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    # every day
+    - cron: "1 1 * * *"
+
 jobs:
   ufbt-build-action:
     runs-on: ubuntu-latest
-    name: "ufbt: Build for Dev branch (XFW-DEV)"
+    strategy:
+      matrix:
+        include:
+          - name: dev channel
+            sdk-channel: dev
+
+          - name: release channel
+            sdk-channel: release
+
+          - name: Momentum FW Dev
+            sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
+            sdk-channel: dev
+            sdk-hw-target: f7
+
+          - name: Momentum FW Release
+            sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
+            sdk-channel: release
+            sdk-hw-target: f7
+
+    name: "ufbt: Build for ${{ matrix.name }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build with ufbt (XFW-DEV)
+
+      - name: Build with ufbt
         uses: flipperdevices/flipperzero-ufbt-action@v0.1
         id: build-app
         with:
-          sdk-url: https://cloud.cynthialabs.net/s/sGHsQB94a9x5CRs/download?path=/&files=XFW-DEV_@036E09F-sdk.zip
-          sdk-hw-target: f7
+          sdk-channel: ${{ matrix.sdk-channel }}
+          sdk-index-url: ${{ matrix.sdk-index-url }}
+
       - name: Upload app artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
           path: ${{ steps.build-app.outputs.fap-artifacts }}
