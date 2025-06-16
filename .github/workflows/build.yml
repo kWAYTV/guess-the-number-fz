@@ -52,3 +52,16 @@ jobs:
         with:
           name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
           path: ${{ steps.build-app.outputs.fap-artifacts }}
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v1
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          tag_name: latest
+          name: Latest Build
+          prerelease: true
+          files: ${{ steps.build-app.outputs.fap-artifacts }}
+          body: |
+            Automated build from commit ${{ github.sha }}
+
+            Built for: ${{ matrix.name }}
