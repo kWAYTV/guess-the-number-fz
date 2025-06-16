@@ -26,6 +26,7 @@ Guess the secret number (0-99) in the fewest attempts possible. The game provide
 ```bash
 git clone https://github.com/kWAYTV/guess-the-number-fz
 cd guess-the-number-fz
+ufbt update --index-url=https://up.momentum-fw.dev/firmware/directory.json --hw-target=f7 --channel=dev
 ufbt
 ```
 
