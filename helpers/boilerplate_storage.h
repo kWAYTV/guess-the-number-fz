@@ -16,5 +16,7 @@
 #define BOILERPLATE_SETTINGS_KEY_SPEAKER       "Speaker"
 #define BOILERPLATE_SETTINGS_KEY_SAVE_SETTINGS "SaveSettings"
 
+// Save game preferences (haptic, sound, LED settings) to persistent storage
 void boilerplate_save_settings(void* context);
+// Load game preferences from persistent storage, using defaults if file doesn't exist
 void boilerplate_read_settings(void* context);

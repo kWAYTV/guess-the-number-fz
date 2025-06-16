@@ -24,10 +24,10 @@ Boilerplate* boilerplate_app_alloc() {
     app->gui = furi_record_open(RECORD_GUI);
     app->notification = furi_record_open(RECORD_NOTIFICATION);
 
-    //Turn backlight on, believe me this makes testing your app easier
+    // Turn backlight on for better user experience
     notification_message(app->notification, &sequence_display_backlight_on);
 
-    //Scene additions
+    // Initialize view dispatcher and scene manager
     app->view_dispatcher = view_dispatcher_alloc();
 
     app->scene_manager = scene_manager_alloc(&boilerplate_scene_handlers, app);
@@ -40,13 +40,13 @@ Boilerplate* boilerplate_app_alloc() {
         app->view_dispatcher, boilerplate_custom_event_callback);
     app->submenu = submenu_alloc();
 
-    // Set defaults, in case no config loaded
+    // Set default game preferences (all features enabled)
     app->haptic = 1;
     app->speaker = 1;
     app->led = 1;
     app->save_settings = 1;
 
-    // Load configs
+    // Load user settings from storage
     boilerplate_read_settings(app);
 
     view_dispatcher_add_view(
@@ -73,15 +73,14 @@ Boilerplate* boilerplate_app_alloc() {
         BoilerplateViewIdSettings,
         variable_item_list_get_view(app->variable_item_list));
 
-    //End Scene Additions
-
+    // Game initialization complete
     return app;
 }
 
 void boilerplate_app_free(Boilerplate* app) {
     furi_assert(app);
 
-    // Scene manager
+    // Clean up scene manager
     scene_manager_free(app->scene_manager);
 
     // Remove all views from dispatcher
@@ -115,9 +114,8 @@ int32_t boilerplate_app(void* p) {
 
     view_dispatcher_attach_to_gui(app->view_dispatcher, app->gui, ViewDispatcherTypeFullscreen);
 
-    scene_manager_next_scene(
-        app->scene_manager, BoilerplateSceneStartscreen); //Start with start screen
-    //scene_manager_next_scene(app->scene_manager, BoilerplateSceneMenu); //if you want to directly start with Menu
+    // Start the game with the welcome screen
+    scene_manager_next_scene(app->scene_manager, BoilerplateSceneStartscreen);
 
     furi_hal_power_suppress_charge_enter();
 
