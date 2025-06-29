@@ -19,8 +19,67 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
+  check-sdk-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
+      sdk-versions: ${{ steps.check.outputs.sdk-versions }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check SDK versions
+        id: check
+        run: |
+          # Get current SDK versions
+          echo "Checking Official SDK versions..."
+          OFFICIAL_DEV=$(curl -s "https://update.flipperzero.one/firmware/directory.json" | jq -r '.channels.dev.versions[0].version')
+          OFFICIAL_RELEASE=$(curl -s "https://update.flipperzero.one/firmware/directory.json" | jq -r '.channels.release.versions[0].version')
+
+          echo "Checking Momentum SDK versions..."
+          MOMENTUM_DEV=$(curl -s "https://up.momentum-fw.dev/firmware/directory.json" | jq -r '.channels.dev.versions[0].version')
+          MOMENTUM_RELEASE=$(curl -s "https://up.momentum-fw.dev/firmware/directory.json" | jq -r '.channels.release.versions[0].version')
+
+          CURRENT_VERSIONS="official-dev:$OFFICIAL_DEV,official-release:$OFFICIAL_RELEASE,momentum-dev:$MOMENTUM_DEV,momentum-release:$MOMENTUM_RELEASE"
+          echo "Current versions: $CURRENT_VERSIONS"
+          echo "sdk-versions=$CURRENT_VERSIONS" >> $GITHUB_OUTPUT
+
+          # Check if we have previous versions stored
+          if [[ -f ".sdk-versions" ]]; then
+            PREVIOUS_VERSIONS=$(cat .sdk-versions)
+            echo "Previous versions: $PREVIOUS_VERSIONS"
+            
+            if [[ "$CURRENT_VERSIONS" != "$PREVIOUS_VERSIONS" ]]; then
+              echo "SDK versions changed! Building..."
+              echo "should-build=true" >> $GITHUB_OUTPUT
+            else
+              echo "No SDK changes detected."
+              echo "should-build=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No previous version file found. Building..."
+            echo "should-build=true" >> $GITHUB_OUTPUT
+          fi
+
+          # Store current versions
+          echo "$CURRENT_VERSIONS" > .sdk-versions
+
+      - name: Commit version tracking
+        if: steps.check.outputs.should-build == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .sdk-versions
+          git diff --staged --quiet || git commit -m "chore: update SDK version tracking"
+          git push
+
   build:
+    needs: check-sdk-changes
+    if: needs.check-sdk-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     strategy:
       # Don't cancel all jobs if one fails. We want to see the results for all SDKs.
@@ -82,29 +141,56 @@ jobs:
           path: dist/
 
   release:
-    # This job only runs on pushes to the 'main' branch, after all build jobs succeed.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
+    # This job runs on pushes to main OR when SDK changes are detected on schedule
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'schedule' && needs.check-sdk-changes.outputs.should-build == 'true')
+    needs: [check-sdk-changes, build]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4.3.0
         with:
           path: artifacts
 
       - name: Prepare release
+        id: prepare
         run: |
           mkdir -p release
           find artifacts -name "*.fap" -exec cp {} release/ \;
+
+          # Generate timestamp-based tag
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          TAG_NAME="build-${TIMESTAMP}"
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+
+          # Create release notes
           echo "### Built Files" > release_notes.md
+          echo "" >> release_notes.md
           ls release/*.fap | sort | xargs -I {} basename {} | sed 's/^/- /' >> release_notes.md
+          echo "" >> release_notes.md
+
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            echo "**Trigger:** SDK Update Detected" >> release_notes.md
+            echo "**SDK Versions:** ${{ needs.check-sdk-changes.outputs.sdk-versions }}" >> release_notes.md
+          else
+            echo "**Trigger:** Repository Update" >> release_notes.md
+          fi
+
+          echo "**Commit:** \`${{ github.sha }}\`" >> release_notes.md
+          echo "**Built on:** $(date -u)" >> release_notes.md
 
       - name: Create release
         uses: softprops/action-gh-release@v2.3.2
         with:
-          tag_name: latest
-          name: Latest Build
+          tag_name: ${{ steps.prepare.outputs.tag_name }}
+          name: "Build ${{ steps.prepare.outputs.tag_name }}"
           body_path: release_notes.md
-          prerelease: true
+          draft: false
+          prerelease: false
           files: release/*.fap
           make_latest: true
+          generate_release_notes: true
