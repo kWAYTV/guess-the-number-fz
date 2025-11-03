@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
 typedef enum {
     GameCustomEventStartscreenUp,
     GameCustomEventStartscreenDown,
