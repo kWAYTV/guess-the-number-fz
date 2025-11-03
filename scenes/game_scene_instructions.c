@@ -1,5 +1,7 @@
 #include "../guess_the_number.h"
 #include "../helpers/game_custom_event.h"
+#include "../helpers/game_haptic.h"
+#include "../helpers/game_led.h"
 #include "../views/game_instructions.h"
 
 void game_scene_instructions_callback(GameCustomEvent event, void* context) {
@@ -28,9 +30,8 @@ bool game_scene_instructions_on_event(void* context, SceneManagerEvent event) {
         case GameCustomEventInstructionsDown:
             break;
         case GameCustomEventInstructionsBack:
-            notification_message(app->notification, &sequence_reset_red);
-            notification_message(app->notification, &sequence_reset_green);
-            notification_message(app->notification, &sequence_reset_blue);
+            game_play_button_press(app);
+            game_led_reset(app);
             if(!scene_manager_search_and_switch_to_previous_scene(
                    app->scene_manager, GameSceneMenu)) {
                 scene_manager_stop(app->scene_manager);
@@ -48,4 +49,3 @@ void game_scene_instructions_on_exit(void* context) {
     GameApp* app = context;
     UNUSED(app);
 }
-

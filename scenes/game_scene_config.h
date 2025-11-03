@@ -3,4 +3,3 @@ ADD_SCENE(game, menu, Menu)
 ADD_SCENE(game, instructions, Instructions)
 ADD_SCENE(game, play, Play)
 ADD_SCENE(game, settings, Settings)
-

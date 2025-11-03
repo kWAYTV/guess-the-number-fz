@@ -24,4 +24,3 @@ const SceneManagerHandlers game_scene_handlers = {
     .on_exit_handlers = game_on_exit_handlers,
     .scene_num = GameSceneNum,
 };
-

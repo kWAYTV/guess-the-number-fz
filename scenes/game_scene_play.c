@@ -30,9 +30,7 @@ bool game_scene_play_on_event(void* context, SceneManagerEvent event) {
         case GameCustomEventPlayDown:
             break;
         case GameCustomEventPlayBack:
-            notification_message(app->notification, &sequence_reset_red);
-            notification_message(app->notification, &sequence_reset_green);
-            notification_message(app->notification, &sequence_reset_blue);
+            game_led_reset(app);
             if(!scene_manager_search_and_switch_to_previous_scene(
                    app->scene_manager, GameSceneMenu)) {
                 scene_manager_stop(app->scene_manager);
@@ -50,4 +48,3 @@ void game_scene_play_on_exit(void* context) {
     GameApp* app = context;
     UNUSED(app);
 }
-

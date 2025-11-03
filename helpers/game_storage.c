@@ -29,8 +29,7 @@ void game_save_settings(void* context) {
     }
 
     if(!storage_common_stat(storage, GAME_SETTINGS_SAVE_PATH, NULL) == FSE_OK) {
-        FURI_LOG_D(
-            TAG, "Config file %s is not found. Will create new.", GAME_SETTINGS_SAVE_PATH);
+        FURI_LOG_D(TAG, "Config file %s is not found. Will create new.", GAME_SETTINGS_SAVE_PATH);
         if(storage_common_stat(storage, CONFIG_FILE_DIRECTORY_PATH, NULL) == FSE_NOT_EXIST) {
             FURI_LOG_D(
                 TAG, "Directory %s doesn't exist. Will create new.", CONFIG_FILE_DIRECTORY_PATH);
@@ -46,13 +45,11 @@ void game_save_settings(void* context) {
         return;
     }
 
-    flipper_format_write_header_cstr(
-        fff_file, GAME_SETTINGS_HEADER, GAME_SETTINGS_FILE_VERSION);
+    flipper_format_write_header_cstr(fff_file, GAME_SETTINGS_HEADER, GAME_SETTINGS_FILE_VERSION);
     flipper_format_write_uint32(fff_file, GAME_SETTINGS_KEY_HAPTIC, &app->haptic, 1);
     flipper_format_write_uint32(fff_file, GAME_SETTINGS_KEY_SPEAKER, &app->speaker, 1);
     flipper_format_write_uint32(fff_file, GAME_SETTINGS_KEY_LED, &app->led, 1);
-    flipper_format_write_uint32(
-        fff_file, GAME_SETTINGS_KEY_SAVE_SETTINGS, &app->save_settings, 1);
+    flipper_format_write_uint32(fff_file, GAME_SETTINGS_KEY_SAVE_SETTINGS, &app->save_settings, 1);
 
     if(!flipper_format_rewind(fff_file)) {
         game_close_config_file(fff_file);
@@ -102,12 +99,10 @@ void game_read_settings(void* context) {
     flipper_format_read_uint32(fff_file, GAME_SETTINGS_KEY_HAPTIC, &app->haptic, 1);
     flipper_format_read_uint32(fff_file, GAME_SETTINGS_KEY_SPEAKER, &app->speaker, 1);
     flipper_format_read_uint32(fff_file, GAME_SETTINGS_KEY_LED, &app->led, 1);
-    flipper_format_read_uint32(
-        fff_file, GAME_SETTINGS_KEY_SAVE_SETTINGS, &app->save_settings, 1);
+    flipper_format_read_uint32(fff_file, GAME_SETTINGS_KEY_SAVE_SETTINGS, &app->save_settings, 1);
 
     flipper_format_rewind(fff_file);
 
     game_close_config_file(fff_file);
     game_close_storage();
 }
-

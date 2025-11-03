@@ -24,10 +24,7 @@ typedef struct {
     bool game_won;
 } GamePlayModel;
 
-void game_play_set_callback(
-    GamePlay* instance,
-    GamePlayCallback callback,
-    void* context) {
+void game_play_set_callback(GamePlay* instance, GamePlayCallback callback, void* context) {
     furi_assert(instance);
     furi_assert(callback);
     instance->callback = callback;
@@ -93,9 +90,11 @@ bool game_play_input(InputEvent* event, void* context) {
             GamePlayModel * model,
             {
                 UNUSED(model);
-                instance->callback(GameCustomEventPlayBack, instance->context);
                 game_play_long_bump(instance->context);
                 game_led_set_rgb(instance->context, 255, 0, 0);
+                furi_thread_flags_wait(0, FuriFlagWaitAny, 200);
+                game_led_reset(instance->context);
+                instance->callback(GameCustomEventPlayBack, instance->context);
             },
             true);
         return true;
@@ -112,6 +111,8 @@ bool game_play_input(InputEvent* event, void* context) {
                 model->best_score = saved_best_score;
                 game_play_long_bump(instance->context);
                 game_led_set_rgb(instance->context, 0, 0, 255);
+                furi_thread_flags_wait(0, FuriFlagWaitAny, 200);
+                game_led_reset(instance->context);
             },
             true);
         return true;
@@ -194,8 +195,7 @@ bool game_play_input(InputEvent* event, void* context) {
                                         "Very close! Go lower!");
                                 game_play_close_sound(instance->context);
                                 game_play_close_bump(instance->context);
-                                game_led_set_rgb(
-                                    instance->context, 255, 255, 0);
+                                game_led_set_rgb(instance->context, 255, 255, 0);
                             } else if(difference <= 5) {
                                 strcpy(
                                     model->game_message,
@@ -204,24 +204,23 @@ bool game_play_input(InputEvent* event, void* context) {
                                         "Close! Try lower!");
                                 game_play_close_sound(instance->context);
                                 game_play_short_bump(instance->context);
-                                game_led_set_rgb(
-                                    instance->context, 255, 165, 0);
+                                game_led_set_rgb(instance->context, 255, 165, 0);
                             } else if(difference <= 15) {
                                 strcpy(
                                     model->game_message,
                                     model->target_number > model->player_guess ? "Too low!" :
                                                                                  "Too high!");
                                 game_play_error_sound(instance->context);
-                                game_led_set_rgb(
-                                    instance->context, 255, 0, 0);
+                                game_play_bad_bump(instance->context);
+                                game_led_set_rgb(instance->context, 255, 0, 0);
                             } else {
                                 strcpy(
                                     model->game_message,
                                     model->target_number > model->player_guess ? "Way too low!" :
                                                                                  "Way too high!");
                                 game_play_error_sound(instance->context);
-                                game_led_set_rgb(
-                                    instance->context, 255, 0, 0);
+                                game_play_bad_bump(instance->context);
+                                game_led_set_rgb(instance->context, 255, 0, 0);
                             }
                         }
                         game_play_button_press(instance->context);
@@ -241,11 +240,10 @@ bool game_play_input(InputEvent* event, void* context) {
         case InputKeyLeft:
         case InputKeyRight:
         case InputKeyOk:
+            game_play_input_sound(instance->context);
+            break;
         case InputKeyBack:
         case InputKeyMAX:
-            game_play_input_sound(instance->context);
-            game_led_set_rgb(instance->context, 0, 0, 0);
-            game_stop_all_sound(instance->context);
             break;
         }
     }
@@ -264,6 +262,10 @@ void game_play_exit(void* context) {
 
 void game_play_enter(void* context) {
     furi_assert(context);
+    GamePlay* instance = context;
+    if(instance->context) {
+        game_led_reset(instance->context);
+    }
     dolphin_deed(DolphinDeedPluginStart);
 }
 
@@ -277,11 +279,7 @@ GamePlay* game_play_alloc() {
     view_set_enter_callback(instance->view, game_play_enter);
     view_set_exit_callback(instance->view, game_play_exit);
 
-    with_view_model(
-        instance->view,
-        GamePlayModel * model,
-        { game_play_model_init(model); },
-        true);
+    with_view_model(instance->view, GamePlayModel * model, { game_play_model_init(model); }, true);
 
     return instance;
 }
@@ -296,4 +294,3 @@ View* game_play_get_view(GamePlay* instance) {
     furi_assert(instance);
     return instance->view;
 }
-

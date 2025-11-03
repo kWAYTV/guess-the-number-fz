@@ -120,4 +120,3 @@ View* game_instructions_get_view(GameInstructions* instance) {
     furi_assert(instance);
     return instance->view;
 }
-

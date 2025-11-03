@@ -17,4 +17,3 @@ View* game_instructions_get_view(GameInstructions* game_instructions);
 GameInstructions* game_instructions_alloc();
 
 void game_instructions_free(GameInstructions* game_instructions);
-

@@ -126,4 +126,3 @@ View* game_startscreen_get_view(GameStartscreen* instance) {
     furi_assert(instance);
     return instance->view;
 }
-

@@ -60,4 +60,3 @@ static inline int16_t game_custom_menu_event_get_value(uint32_t packed_value) {
     game_custom_menu_event_unpack(packed_value, NULL, &value);
     return value;
 }
-

@@ -24,8 +24,7 @@ void game_led_set_rgb(void* context, int red, int green, int blue) {
         NULL,
     };
     notification_message(app->notification, &notification_sequence);
-    furi_thread_flags_wait(
-        0, FuriFlagWaitAny, 10);
+    furi_thread_flags_wait(0, FuriFlagWaitAny, 10);
 }
 
 void game_led_reset(void* context) {
@@ -34,7 +33,5 @@ void game_led_reset(void* context) {
     notification_message(app->notification, &sequence_reset_green);
     notification_message(app->notification, &sequence_reset_blue);
 
-    furi_thread_flags_wait(
-        0, FuriFlagWaitAny, 300);
+    furi_thread_flags_wait(0, FuriFlagWaitAny, 300);
 }
-

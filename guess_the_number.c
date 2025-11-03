@@ -31,10 +31,8 @@ GameApp* game_app_alloc() {
     view_dispatcher_set_event_callback_context(app->view_dispatcher, app);
     view_dispatcher_set_navigation_event_callback(
         app->view_dispatcher, game_navigation_event_callback);
-    view_dispatcher_set_tick_event_callback(
-        app->view_dispatcher, game_tick_event_callback, 100);
-    view_dispatcher_set_custom_event_callback(
-        app->view_dispatcher, game_custom_event_callback);
+    view_dispatcher_set_tick_event_callback(app->view_dispatcher, game_tick_event_callback, 100);
+    view_dispatcher_set_custom_event_callback(app->view_dispatcher, game_custom_event_callback);
     app->submenu = submenu_alloc();
 
     app->haptic = 1;
@@ -44,8 +42,7 @@ GameApp* game_app_alloc() {
 
     game_read_settings(app);
 
-    view_dispatcher_add_view(
-        app->view_dispatcher, GameViewIdMenu, submenu_get_view(app->submenu));
+    view_dispatcher_add_view(app->view_dispatcher, GameViewIdMenu, submenu_get_view(app->submenu));
     app->game_startscreen = game_startscreen_alloc();
     view_dispatcher_add_view(
         app->view_dispatcher,
@@ -58,9 +55,7 @@ GameApp* game_app_alloc() {
         game_instructions_get_view(app->game_instructions));
     app->game_play = game_play_alloc();
     view_dispatcher_add_view(
-        app->view_dispatcher,
-        GameViewIdPlay,
-        game_play_get_view(app->game_play));
+        app->view_dispatcher, GameViewIdPlay, game_play_get_view(app->game_play));
 
     app->variable_item_list = variable_item_list_alloc();
     view_dispatcher_add_view(
@@ -115,4 +110,3 @@ int32_t guess_the_number_app(void* p) {
 
     return 0;
 }
-

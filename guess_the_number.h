@@ -62,4 +62,3 @@ typedef enum {
     GameSettingsOff,
     GameSettingsOn,
 } GameSettingsStoreState;
-

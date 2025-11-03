@@ -101,11 +101,7 @@ void game_scene_settings_on_enter(void* context) {
     variable_item_set_current_value_text(item, led_text[value_index]);
 
     item = variable_item_list_add(
-        app->variable_item_list,
-        "Save Settings",
-        2,
-        game_scene_settings_set_save_settings,
-        app);
+        app->variable_item_list, "Save Settings", 2, game_scene_settings_set_save_settings, app);
     value_index = value_index_uint32(app->save_settings, settings_value, 2);
     variable_item_set_current_value_index(item, value_index);
     variable_item_set_current_value_text(item, settings_text[value_index]);
@@ -127,4 +123,3 @@ void game_scene_settings_on_exit(void* context) {
     variable_item_list_set_selected_item(app->variable_item_list, 0);
     variable_item_list_reset(app->variable_item_list);
 }
-

@@ -62,4 +62,3 @@ void game_stop_all_sound(void* context) {
         furi_hal_speaker_release();
     }
 }
-

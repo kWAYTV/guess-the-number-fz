@@ -1,4 +1,5 @@
 #include "../guess_the_number.h"
+#include "../helpers/game_haptic.h"
 
 enum SubmenuIndex {
     SubmenuIndexPlay = 10,
@@ -8,6 +9,7 @@ enum SubmenuIndex {
 
 void game_scene_menu_submenu_callback(void* context, uint32_t index) {
     GameApp* app = context;
+    game_play_button_press(app);
     view_dispatcher_send_custom_event(app->view_dispatcher, index);
 }
 
@@ -15,11 +17,7 @@ void game_scene_menu_on_enter(void* context) {
     GameApp* app = context;
 
     submenu_add_item(
-        app->submenu,
-        "🎮 Start Game",
-        SubmenuIndexPlay,
-        game_scene_menu_submenu_callback,
-        app);
+        app->submenu, "🎮 Start Game", SubmenuIndexPlay, game_scene_menu_submenu_callback, app);
     submenu_add_item(
         app->submenu,
         "📖 How to Play",
@@ -27,11 +25,7 @@ void game_scene_menu_on_enter(void* context) {
         game_scene_menu_submenu_callback,
         app);
     submenu_add_item(
-        app->submenu,
-        "⚙️ Settings",
-        SubmenuIndexSettings,
-        game_scene_menu_submenu_callback,
-        app);
+        app->submenu, "⚙️ Settings", SubmenuIndexSettings, game_scene_menu_submenu_callback, app);
 
     submenu_set_selected_item(
         app->submenu, scene_manager_get_scene_state(app->scene_manager, GameSceneMenu));
@@ -53,13 +47,11 @@ bool game_scene_menu_on_event(void* context, SceneManagerEvent event) {
             scene_manager_next_scene(app->scene_manager, GameSceneInstructions);
             return true;
         } else if(event.event == SubmenuIndexPlay) {
-            scene_manager_set_scene_state(
-                app->scene_manager, GameSceneMenu, SubmenuIndexPlay);
+            scene_manager_set_scene_state(app->scene_manager, GameSceneMenu, SubmenuIndexPlay);
             scene_manager_next_scene(app->scene_manager, GameScenePlay);
             return true;
         } else if(event.event == SubmenuIndexSettings) {
-            scene_manager_set_scene_state(
-                app->scene_manager, GameSceneMenu, SubmenuIndexSettings);
+            scene_manager_set_scene_state(app->scene_manager, GameSceneMenu, SubmenuIndexSettings);
             scene_manager_next_scene(app->scene_manager, GameSceneSettings);
             return true;
         }
@@ -71,4 +63,3 @@ void game_scene_menu_on_exit(void* context) {
     GameApp* app = context;
     submenu_reset(app->submenu);
 }
-

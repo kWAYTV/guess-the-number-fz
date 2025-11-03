@@ -69,4 +69,3 @@ void game_play_button_press(void* context) {
     furi_thread_flags_wait(0, FuriFlagWaitAny, 5);
     notification_message(app->notification, &sequence_reset_vibro);
 }
-

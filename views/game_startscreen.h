@@ -17,4 +17,3 @@ View* game_startscreen_get_view(GameStartscreen* game_startscreen);
 GameStartscreen* game_startscreen_alloc();
 
 void game_startscreen_free(GameStartscreen* game_startscreen);
-

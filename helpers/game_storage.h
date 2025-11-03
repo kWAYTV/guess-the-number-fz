@@ -7,7 +7,7 @@
 #include "../guess_the_number.h"
 
 #define GAME_SETTINGS_FILE_VERSION      1
-#define CONFIG_FILE_DIRECTORY_PATH             EXT_PATH("apps_data/guess_the_number")
+#define CONFIG_FILE_DIRECTORY_PATH      EXT_PATH("apps_data/guess_the_number")
 #define GAME_SETTINGS_SAVE_PATH         CONFIG_FILE_DIRECTORY_PATH "/guess_the_number.conf"
 #define GAME_SETTINGS_SAVE_PATH_TMP     GAME_SETTINGS_SAVE_PATH ".tmp"
 #define GAME_SETTINGS_HEADER            "GTN Config File"
@@ -18,4 +18,3 @@
 
 void game_save_settings(void* context);
 void game_read_settings(void* context);
-
