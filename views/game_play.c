@@ -8,6 +8,7 @@
 #include "../helpers/game_haptic.h"
 #include "../helpers/game_speaker.h"
 #include "../helpers/game_led.h"
+#include "../helpers/game_storage.h"
 
 struct GamePlay {
     View* view;
@@ -16,7 +17,6 @@ struct GamePlay {
 };
 
 typedef struct {
-    char* buffer;
     int target_number, player_guess;
     char game_message[50];
     int attempts;
@@ -77,6 +77,9 @@ static void game_play_model_init(GamePlayModel* const model) {
     model->attempts = 0;
     model->game_won = false;
     strcpy(model->game_message, "Make your first guess!");
+    if(model->best_score == 0) {
+        model->best_score = game_read_best_score();
+    }
     dolphin_deed(DolphinDeedPluginGameStart);
 }
 
@@ -178,6 +181,7 @@ bool game_play_input(InputEvent* event, void* context) {
 
                             if(model->best_score == 0 || model->attempts < model->best_score) {
                                 model->best_score = model->attempts;
+                                game_save_best_score(model->best_score);
                             }
 
                             game_play_win_sound(instance->context);

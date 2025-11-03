@@ -16,5 +16,13 @@
 #define GAME_SETTINGS_KEY_SPEAKER       "Speaker"
 #define GAME_SETTINGS_KEY_SAVE_SETTINGS "SaveSettings"
 
+#define GAME_SCORE_FILE_VERSION 1
+#define GAME_SCORE_SAVE_PATH    CONFIG_FILE_DIRECTORY_PATH "/best_score.conf"
+#define GAME_SCORE_HEADER       "GTN Score File"
+#define GAME_SCORE_KEY_BEST     "BestScore"
+
 void game_save_settings(void* context);
 void game_read_settings(void* context);
+
+void game_save_best_score(int best_score);
+int game_read_best_score(void);
