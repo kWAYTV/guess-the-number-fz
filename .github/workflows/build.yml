@@ -87,6 +87,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4.3.0
         with:
@@ -96,8 +99,52 @@ jobs:
         run: |
           mkdir -p release
           find artifacts -name "*.fap" -exec cp {} release/ \;
-          echo "### Built Files" > release_notes.md
-          ls release/*.fap | sort | xargs -I {} basename {} | sed 's/^/- /' >> release_notes.md
+
+          # Generate release notes
+          {
+            echo "# Latest Build"
+            echo ""
+            COMMIT_SHORT=$(git rev-parse --short HEAD)
+            echo "**Commit:** [\`$COMMIT_SHORT\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+            echo "**Date:** $(date -u +"%Y-%m-%d %H:%M UTC")"
+            echo "**Trigger:** ${{ github.event_name }}"
+            echo ""
+            echo "## Built Files"
+            echo ""
+            
+            # Group by SDK source
+            echo "### Official Firmware"
+            for fap in release/*_official-*.fap; do
+              if [ -f "$fap" ]; then
+                filename=$(basename "$fap")
+                if [[ "$filename" == *"official-dev"* ]]; then
+                  echo "- \`$filename\` - Official Dev SDK"
+                elif [[ "$filename" == *"official-release"* ]]; then
+                  echo "- \`$filename\` - Official Release SDK"
+                fi
+              fi
+            done | sort
+            
+            echo ""
+            echo "### Momentum Firmware"
+            for fap in release/*_momentum-*.fap; do
+              if [ -f "$fap" ]; then
+                filename=$(basename "$fap")
+                if [[ "$filename" == *"momentum-dev"* ]]; then
+                  echo "- \`$filename\` - Momentum Dev SDK"
+                elif [[ "$filename" == *"momentum-release"* ]]; then
+                  echo "- \`$filename\` - Momentum Release SDK"
+                fi
+              fi
+            done | sort
+            
+            echo ""
+            echo "---"
+            echo ""
+            echo "📦 Download the appropriate file for your firmware version."
+          } > release_notes.md
+
+          cat release_notes.md
 
       - name: Create release
         uses: softprops/action-gh-release@v2.3.2
