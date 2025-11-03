@@ -82,8 +82,8 @@ jobs:
           path: dist/
 
   release:
-    # This job only runs on pushes to the 'main' branch, after all build jobs succeed.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # This job runs on pushes to the 'main' branch or on scheduled runs, after all build jobs succeed.
+    if: (github.event_name == 'push' || github.event_name == 'schedule') && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     steps:
