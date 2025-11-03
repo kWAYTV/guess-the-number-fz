@@ -96,16 +96,27 @@ jobs:
           path: artifacts
 
       - name: Prepare release
+        id: prepare
         run: |
           mkdir -p release
           find artifacts -name "*.fap" -exec cp {} release/ \;
 
+          # Get version from application.fam
+          VERSION=$(grep 'fap_version=' application.fam | sed 's/.*fap_version="\([^"]*\)".*/\1/' || echo "1.3")
+          COMMIT_SHORT=$(git rev-parse --short HEAD)
+          TAG_NAME="v${VERSION}-${COMMIT_SHORT}"
+          RELEASE_NAME="v${VERSION} (${COMMIT_SHORT})"
+
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "release_name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "commit_short=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+
           # Generate release notes
           {
-            echo "# Latest Build"
+            echo "# Release v${VERSION}"
             echo ""
-            COMMIT_SHORT=$(git rev-parse --short HEAD)
-            echo "**Commit:** [\`$COMMIT_SHORT\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+            echo "**Commit:** [\`${COMMIT_SHORT}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
             echo "**Date:** $(date -u +"%Y-%m-%d %H:%M UTC")"
             echo "**Trigger:** ${{ github.event_name }}"
             echo ""
@@ -149,9 +160,9 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2.4.1
         with:
-          tag_name: latest
-          name: Latest Build
+          tag_name: ${{ steps.prepare.outputs.tag_name }}
+          name: ${{ steps.prepare.outputs.release_name }}
           body_path: release_notes.md
-          prerelease: true
+          prerelease: false
           files: release/*.fap
-          make_latest: true
+          draft: false
