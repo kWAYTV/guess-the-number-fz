@@ -2,6 +2,8 @@
 
 > An enhanced number guessing game with progressive feedback, score tracking, and immersive multi-sensory experience.
 
+[![FAP: Build for multiple SDK sources](https://github.com/kWAYTV/guess-the-number-fz/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/kWAYTV/guess-the-number-fz/actions/workflows/build.yml)
+
 ## ✨ Features
 
 - **Progressive Hint System** - Distance-based feedback (very close, close, far)
