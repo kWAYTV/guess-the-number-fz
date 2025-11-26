@@ -104,8 +104,17 @@ jobs:
           # Get version from application.fam
           VERSION=$(grep 'fap_version=' application.fam | sed 's/.*fap_version="\([^"]*\)".*/\1/' || echo "1.3")
           COMMIT_SHORT=$(git rev-parse --short HEAD)
-          TAG_NAME="v${VERSION}-${COMMIT_SHORT}"
-          RELEASE_NAME="v${VERSION} (${COMMIT_SHORT})"
+          DATE_TAG=$(date -u +"%Y%m%d")
+          
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            # Scheduled builds: include date to create unique daily releases
+            TAG_NAME="v${VERSION}-${COMMIT_SHORT}-${DATE_TAG}"
+            RELEASE_NAME="v${VERSION} (${COMMIT_SHORT}) - ${DATE_TAG}"
+          else
+            # Push builds: just version and commit
+            TAG_NAME="v${VERSION}-${COMMIT_SHORT}"
+            RELEASE_NAME="v${VERSION} (${COMMIT_SHORT})"
+          fi
 
           echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
           echo "release_name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
