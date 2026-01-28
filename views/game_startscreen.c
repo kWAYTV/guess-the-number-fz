@@ -39,7 +39,6 @@ void game_startscreen_draw(Canvas* canvas, GameStartscreenModel* model) {
     canvas_draw_str_aligned(canvas, 64, 28, AlignCenter, AlignTop, "Find the secret number!");
     canvas_draw_str_aligned(canvas, 64, 38, AlignCenter, AlignTop, "Range: 0-99");
 
-    canvas_set_font(canvas, FontSecondary);
     canvas_draw_str_aligned(canvas, 64, 52, AlignCenter, AlignTop, "Press any button to start");
 }
 

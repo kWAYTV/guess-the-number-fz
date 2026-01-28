@@ -94,18 +94,11 @@ bool game_play_input(InputEvent* event, void* context) {
     GamePlay* instance = context;
 
     if(event->type == InputTypeLong && event->key == InputKeyBack) {
-        with_view_model(
-            instance->view,
-            GamePlayModel * model,
-            {
-                UNUSED(model);
-                game_play_long_bump(instance->context);
-                game_led_set_rgb(instance->context, 255, 0, 0);
-                furi_thread_flags_wait(0, FuriFlagWaitAny, 200);
-                game_led_reset(instance->context);
-                instance->callback(GameCustomEventPlayBack, instance->context);
-            },
-            true);
+        game_play_long_bump(instance->context);
+        game_led_set_rgb(instance->context, 255, 0, 0);
+        furi_thread_flags_wait(0, FuriFlagWaitAny, 200);
+        game_led_reset(instance->context);
+        instance->callback(GameCustomEventPlayBack, instance->context);
         return true;
     }
 
@@ -118,12 +111,12 @@ bool game_play_input(InputEvent* event, void* context) {
                 strcpy(model->game_message, "New game started!");
                 game_play_model_init(model);
                 model->best_score = saved_best_score;
-                game_play_long_bump(instance->context);
-                game_led_set_rgb(instance->context, 0, 0, 255);
-                furi_thread_flags_wait(0, FuriFlagWaitAny, 200);
-                game_led_reset(instance->context);
             },
             true);
+        game_play_long_bump(instance->context);
+        game_led_set_rgb(instance->context, 0, 0, 255);
+        furi_thread_flags_wait(0, FuriFlagWaitAny, 200);
+        game_led_reset(instance->context);
         return true;
     }
 
@@ -134,7 +127,7 @@ bool game_play_input(InputEvent* event, void* context) {
                 instance->view,
                 GamePlayModel * model,
                 {
-                    model->player_guess = model->player_guess < 99 ? model->player_guess + 1 : 0;
+                    model->player_guess = model->player_guess < 99 ? model->player_guess + 1 : 99;
                     game_play_button_press(instance->context);
                     game_play_input_sound(instance->context);
                 },
@@ -145,7 +138,7 @@ bool game_play_input(InputEvent* event, void* context) {
                 instance->view,
                 GamePlayModel * model,
                 {
-                    model->player_guess = model->player_guess > 0 ? model->player_guess - 1 : 99;
+                    model->player_guess = model->player_guess > 0 ? model->player_guess - 1 : 0;
                     game_play_button_press(instance->context);
                     game_play_input_sound(instance->context);
                 },
@@ -309,6 +302,7 @@ GamePlay* game_play_alloc() {
 
 void game_play_free(GamePlay* instance) {
     furi_assert(instance);
+    with_view_model(instance->view, GamePlayModel * model, { UNUSED(model); }, true);
     view_free(instance->view);
     free(instance);
 }
