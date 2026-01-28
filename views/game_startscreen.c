@@ -104,6 +104,8 @@ GameStartscreen* game_startscreen_alloc() {
     view_set_context(instance->view, instance);
     view_set_draw_callback(instance->view, (ViewDrawCallback)game_startscreen_draw);
     view_set_input_callback(instance->view, game_startscreen_input);
+    view_set_enter_callback(instance->view, game_startscreen_enter);
+    view_set_exit_callback(instance->view, game_startscreen_exit);
 
     with_view_model(
         instance->view,

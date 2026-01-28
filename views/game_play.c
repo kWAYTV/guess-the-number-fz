@@ -148,7 +148,7 @@ bool game_play_input(InputEvent* event, void* context) {
                 instance->view,
                 GamePlayModel * model,
                 {
-                    model->player_guess = model->player_guess > 10 ? model->player_guess - 10 : 99;
+                    model->player_guess = model->player_guess >= 10 ? model->player_guess - 10 : 0;
                     game_play_short_bump(instance->context);
                 },
                 true);
@@ -158,7 +158,8 @@ bool game_play_input(InputEvent* event, void* context) {
                 instance->view,
                 GamePlayModel * model,
                 {
-                    model->player_guess = model->player_guess < 90 ? model->player_guess + 10 : 0;
+                    model->player_guess = model->player_guess <= 89 ? model->player_guess + 10 :
+                                                                      99;
                     game_play_short_bump(instance->context);
                 },
                 true);
@@ -226,6 +227,9 @@ bool game_play_input(InputEvent* event, void* context) {
                                 game_play_bad_bump(instance->context);
                                 game_led_set_rgb(instance->context, 255, 0, 0);
                             }
+                            // Auto-reset LED after wrong guess
+                            furi_thread_flags_wait(0, FuriFlagWaitAny, 500);
+                            game_led_reset(instance->context);
                         }
                         game_play_button_press(instance->context);
                     }
