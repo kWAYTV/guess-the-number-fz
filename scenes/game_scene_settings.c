@@ -1,10 +1,14 @@
 #include "../guess_the_number.h"
+#include "../helpers/game_storage.h"
+#include "../helpers/game_haptic.h"
 #include <lib/toolbox/value_index.h>
 
 enum SettingsIndex {
     SettingsIndexHaptic = 10,
-    SettingsIndexValue1,
-    SettingsIndexValue2,
+    SettingsIndexSpeaker,
+    SettingsIndexLed,
+    SettingsIndexSaveSettings,
+    SettingsIndexResetScore,
 };
 
 const char* const haptic_text[2] = {
@@ -72,9 +76,12 @@ static void game_scene_settings_set_save_settings(VariableItem* item) {
     app->save_settings = settings_value[index];
 }
 
-void game_scene_settings_submenu_callback(void* context, uint32_t index) {
+static void game_scene_settings_enter_callback(void* context, uint32_t index) {
     GameApp* app = context;
-    view_dispatcher_send_custom_event(app->view_dispatcher, index);
+    if(index == SettingsIndexResetScore) {
+        game_clear_best_score();
+        game_play_happy_bump(app);
+    }
 }
 
 void game_scene_settings_on_enter(void* context) {
@@ -101,10 +108,16 @@ void game_scene_settings_on_enter(void* context) {
     variable_item_set_current_value_text(item, led_text[value_index]);
 
     item = variable_item_list_add(
-        app->variable_item_list, "Save Settings", 2, game_scene_settings_set_save_settings, app);
+        app->variable_item_list, "Save Settings:", 2, game_scene_settings_set_save_settings, app);
     value_index = value_index_uint32(app->save_settings, settings_value, 2);
     variable_item_set_current_value_index(item, value_index);
     variable_item_set_current_value_text(item, settings_text[value_index]);
+
+    item = variable_item_list_add(app->variable_item_list, "Reset Best Score", 1, NULL, app);
+    variable_item_set_current_value_text(item, "Press OK");
+
+    variable_item_list_set_enter_callback(
+        app->variable_item_list, game_scene_settings_enter_callback, app);
 
     view_dispatcher_switch_to_view(app->view_dispatcher, GameViewIdSettings);
 }

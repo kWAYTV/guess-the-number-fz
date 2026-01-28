@@ -22,6 +22,8 @@ typedef struct {
     int attempts;
     int best_score;
     bool game_won;
+    int range_min;
+    int range_max;
 } GamePlayModel;
 
 void game_play_set_callback(GamePlay* instance, GamePlayCallback callback, void* context) {
@@ -48,12 +50,14 @@ void game_play_draw(Canvas* canvas, GamePlayModel* model) {
         canvas_draw_str_aligned(canvas, 64, 30, AlignCenter, AlignTop, model->game_message);
     }
 
+    canvas_set_font(canvas, FontSecondary);
     if(model->game_won) {
-        canvas_set_font(canvas, FontSecondary);
         canvas_draw_str_aligned(canvas, 64, 40, AlignCenter, AlignTop, "Press BACK for new game");
     } else {
-        canvas_set_font(canvas, FontSecondary);
-        canvas_draw_str_aligned(canvas, 64, 40, AlignCenter, AlignTop, "Range: 0-99");
+        char rangeBuffer[20];
+        snprintf(
+            rangeBuffer, sizeof(rangeBuffer), "Range: %d-%d", model->range_min, model->range_max);
+        canvas_draw_str_aligned(canvas, 64, 40, AlignCenter, AlignTop, rangeBuffer);
     }
 
     canvas_set_font(canvas, FontSecondary);
@@ -76,11 +80,23 @@ static void game_play_model_init(GamePlayModel* const model) {
     model->player_guess = 50;
     model->attempts = 0;
     model->game_won = false;
+    model->range_min = 0;
+    model->range_max = 99;
     strcpy(model->game_message, "Make your first guess!");
     if(model->best_score == 0) {
         model->best_score = game_read_best_score();
     }
     dolphin_deed(DolphinDeedPluginGameStart);
+}
+
+static void game_led_victory_flash(void* context) {
+    for(int i = 0; i < 3; i++) {
+        game_led_set_rgb(context, 0, 255, 0);
+        furi_thread_flags_wait(0, FuriFlagWaitAny, 150);
+        game_led_reset(context);
+        furi_thread_flags_wait(0, FuriFlagWaitAny, 100);
+    }
+    game_led_set_rgb(context, 0, 255, 0);
 }
 
 bool game_play_input(InputEvent* event, void* context) {
@@ -187,10 +203,17 @@ bool game_play_input(InputEvent* event, void* context) {
 
                             game_play_win_sound(instance->context);
                             game_play_happy_bump(instance->context);
-                            game_led_set_rgb(instance->context, 0, 255, 0);
+                            game_led_victory_flash(instance->context);
                             dolphin_deed(DolphinDeedPluginGameWin);
                         } else {
                             int difference = abs(model->target_number - model->player_guess);
+
+                            // Update dynamic range
+                            if(model->target_number > model->player_guess) {
+                                model->range_min = model->player_guess + 1;
+                            } else {
+                                model->range_max = model->player_guess - 1;
+                            }
 
                             if(difference <= 2) {
                                 strcpy(

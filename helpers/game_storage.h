@@ -26,3 +26,4 @@ void game_read_settings(void* context);
 
 void game_save_best_score(int best_score);
 int game_read_best_score(void);
+void game_clear_best_score(void);

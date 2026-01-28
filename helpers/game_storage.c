@@ -203,3 +203,14 @@ int game_read_best_score(void) {
 
     return best_score;
 }
+
+void game_clear_best_score(void) {
+    FURI_LOG_D(TAG, "Clearing Best Score");
+    Storage* storage = game_open_storage();
+
+    if(storage_file_exists(storage, GAME_SCORE_SAVE_PATH)) {
+        storage_simply_remove(storage, GAME_SCORE_SAVE_PATH);
+    }
+
+    game_close_storage();
+}
