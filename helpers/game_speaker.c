@@ -25,8 +25,6 @@ void game_play_win_sound(void* context) {
     float volume = 1.0f;
     if(furi_hal_speaker_is_mine() || furi_hal_speaker_acquire(30)) {
         furi_hal_speaker_start(NOTE_SUCCESS, volume);
-        furi_thread_flags_wait(0, FuriFlagWaitAny, 150);
-        furi_hal_speaker_start(NOTE_SUCCESS * 1.5f, volume);
     }
 }
 

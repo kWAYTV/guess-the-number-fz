@@ -89,16 +89,6 @@ static void game_play_model_init(GamePlayModel* const model) {
     dolphin_deed(DolphinDeedPluginGameStart);
 }
 
-static void game_led_victory_flash(void* context) {
-    for(int i = 0; i < 3; i++) {
-        game_led_set_rgb(context, 0, 255, 0);
-        furi_thread_flags_wait(0, FuriFlagWaitAny, 150);
-        game_led_reset(context);
-        furi_thread_flags_wait(0, FuriFlagWaitAny, 100);
-    }
-    game_led_set_rgb(context, 0, 255, 0);
-}
-
 bool game_play_input(InputEvent* event, void* context) {
     furi_assert(context);
     GamePlay* instance = context;
@@ -146,6 +136,7 @@ bool game_play_input(InputEvent* event, void* context) {
                 {
                     model->player_guess = model->player_guess < 99 ? model->player_guess + 1 : 0;
                     game_play_button_press(instance->context);
+                    game_play_input_sound(instance->context);
                 },
                 true);
             break;
@@ -156,6 +147,7 @@ bool game_play_input(InputEvent* event, void* context) {
                 {
                     model->player_guess = model->player_guess > 0 ? model->player_guess - 1 : 99;
                     game_play_button_press(instance->context);
+                    game_play_input_sound(instance->context);
                 },
                 true);
             break;
@@ -166,6 +158,7 @@ bool game_play_input(InputEvent* event, void* context) {
                 {
                     model->player_guess = model->player_guess >= 10 ? model->player_guess - 10 : 0;
                     game_play_short_bump(instance->context);
+                    game_play_input_sound(instance->context);
                 },
                 true);
             break;
@@ -177,6 +170,7 @@ bool game_play_input(InputEvent* event, void* context) {
                     model->player_guess = model->player_guess <= 89 ? model->player_guess + 10 :
                                                                       99;
                     game_play_short_bump(instance->context);
+                    game_play_input_sound(instance->context);
                 },
                 true);
             break;
@@ -203,7 +197,7 @@ bool game_play_input(InputEvent* event, void* context) {
 
                             game_play_win_sound(instance->context);
                             game_play_happy_bump(instance->context);
-                            game_led_victory_flash(instance->context);
+                            game_led_set_rgb(instance->context, 0, 255, 0);
                             dolphin_deed(DolphinDeedPluginGameWin);
                         } else {
                             int difference = abs(model->target_number - model->player_guess);
@@ -250,9 +244,6 @@ bool game_play_input(InputEvent* event, void* context) {
                                 game_play_bad_bump(instance->context);
                                 game_led_set_rgb(instance->context, 255, 0, 0);
                             }
-                            // Auto-reset LED after wrong guess
-                            furi_thread_flags_wait(0, FuriFlagWaitAny, 500);
-                            game_led_reset(instance->context);
                         }
                         game_play_button_press(instance->context);
                     }
@@ -271,7 +262,8 @@ bool game_play_input(InputEvent* event, void* context) {
         case InputKeyLeft:
         case InputKeyRight:
         case InputKeyOk:
-            game_play_input_sound(instance->context);
+            game_stop_all_sound(instance->context);
+            game_led_reset(instance->context);
             break;
         case InputKeyBack:
         case InputKeyMAX:
