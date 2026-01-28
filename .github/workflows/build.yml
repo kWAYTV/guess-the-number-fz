@@ -108,7 +108,7 @@ jobs:
           
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
-          # Generate changelog from conventional commits (last 20 commits)
+          # Generate release notes
           {
             echo "# Guess The Number v${VERSION}"
             echo ""
@@ -119,24 +119,32 @@ jobs:
             echo "- **Commit:** [\`$(git rev-parse --short HEAD)\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})"
             echo ""
             
-            # Generate changelog from conventional commits
-            echo "## Recent Changes"
+            echo "## Changes"
             echo ""
             
-            git log --oneline -20 --pretty=format:"- %s" | while read line; do
-              # Format conventional commits nicely
-              echo "$line" | sed \
-                -e 's/^- feat/- ✨ **feat**/g' \
-                -e 's/^- fix/- 🐛 **fix**/g' \
-                -e 's/^- docs/- 📚 **docs**/g' \
-                -e 's/^- style/- 💄 **style**/g' \
-                -e 's/^- refactor/- ♻️ **refactor**/g' \
-                -e 's/^- perf/- ⚡ **perf**/g' \
-                -e 's/^- test/- 🧪 **test**/g' \
-                -e 's/^- build/- 📦 **build**/g' \
-                -e 's/^- ci/- 👷 **ci**/g' \
-                -e 's/^- chore/- 🔧 **chore**/g'
-            done
+            if [ "${{ github.event_name }}" = "push" ]; then
+              # Show only commits in this push
+              BEFORE="${{ github.event.before }}"
+              if [ "$BEFORE" != "0000000000000000000000000000000000000000" ] && [ -n "$BEFORE" ]; then
+                git log --oneline --pretty=format:"- %s" ${BEFORE}..${{ github.sha }} | while read line; do
+                  echo "$line" | sed \
+                    -e 's/^- feat/- ✨ **feat**/g' \
+                    -e 's/^- fix/- 🐛 **fix**/g' \
+                    -e 's/^- docs/- 📚 **docs**/g' \
+                    -e 's/^- style/- 💄 **style**/g' \
+                    -e 's/^- refactor/- ♻️ **refactor**/g' \
+                    -e 's/^- perf/- ⚡ **perf**/g' \
+                    -e 's/^- test/- 🧪 **test**/g' \
+                    -e 's/^- build/- 📦 **build**/g' \
+                    -e 's/^- ci/- 👷 **ci**/g' \
+                    -e 's/^- chore/- 🔧 **chore**/g'
+                done
+              else
+                echo "- Initial commit"
+              fi
+            else
+              echo "- 🔄 Automated rebuild (no code changes)"
+            fi
             
             echo ""
             echo ""
