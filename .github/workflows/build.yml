@@ -1,8 +1,8 @@
 # This workflow builds the Flipper Application (FAP) against multiple
-# firmware SDKs to ensure compatibility. It then creates a single
-# GitHub Release containing all the compiled .fap files.
+# firmware SDKs to ensure compatibility. It maintains a rolling "latest"
+# release with the newest builds and changelog from conventional commits.
 
-name: "FAP: Build for multiple SDK sources"
+name: "FAP: Build and Release"
 
 on:
   push:
@@ -10,11 +10,11 @@ on:
       - main
   pull_request:
   schedule:
-    # Run once a day at 01:01 UTC
+    # Run once a day at 01:01 UTC to keep FAPs updated with SDK changes
     - cron: "1 1 * * *"
+  workflow_dispatch:
 
 # Ensures that only one workflow run for a given branch/ref is running at a time.
-# If a new commit is pushed, the previous run will be cancelled.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -23,7 +23,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      # Don't cancel all jobs if one fails. We want to see the results for all SDKs.
       fail-fast: false
       matrix:
         include:
@@ -52,7 +51,7 @@ jobs:
     name: "Build for ${{ matrix.name }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v4
 
       - name: Build FAP with ufbt
         uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
@@ -76,22 +75,25 @@ jobs:
           done
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.fw-name }}-build
           path: dist/
 
   release:
-    # This job runs on pushes to the 'main' branch or on scheduled runs, after all build jobs succeed.
-    if: (github.event_name == 'push' || github.event_name == 'schedule') && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v6.0.0
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 
@@ -102,67 +104,71 @@ jobs:
           find artifacts -name "*.fap" -exec cp {} release/ \;
 
           # Get version from application.fam
-          VERSION=$(grep 'fap_version=' application.fam | sed 's/.*fap_version="\([^"]*\)".*/\1/' || echo "1.3")
-          COMMIT_SHORT=$(git rev-parse --short HEAD)
-          TAG_NAME="v${VERSION}-${COMMIT_SHORT}"
-          RELEASE_NAME="v${VERSION} (${COMMIT_SHORT})"
-
-          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
-          echo "release_name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
+          VERSION=$(grep 'fap_version=' application.fam | sed 's/.*fap_version="\([^"]*\)".*/\1/' || echo "1.0")
+          
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "commit_short=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
 
-          # Generate release notes
+          # Generate changelog from conventional commits (last 20 commits)
           {
-            echo "# Release v${VERSION}"
+            echo "# Guess The Number v${VERSION}"
             echo ""
-            echo "**Commit:** [\`${COMMIT_SHORT}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
-            echo "**Date:** $(date -u +"%Y-%m-%d %H:%M UTC")"
-            echo "**Trigger:** ${{ github.event_name }}"
+            echo "**Latest build from \`main\` branch**"
             echo ""
-            echo "## Built Files"
+            echo "- **Updated:** $(date -u +'%Y-%m-%d %H:%M UTC')"
+            echo "- **Trigger:** ${{ github.event_name }}"
+            echo "- **Commit:** [\`$(git rev-parse --short HEAD)\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})"
             echo ""
             
-            # Group by SDK source
-            echo "### Official Firmware"
-            for fap in release/*_official-*.fap; do
-              if [ -f "$fap" ]; then
-                filename=$(basename "$fap")
-                if [[ "$filename" == *"official-dev"* ]]; then
-                  echo "- \`$filename\` - Official Dev SDK"
-                elif [[ "$filename" == *"official-release"* ]]; then
-                  echo "- \`$filename\` - Official Release SDK"
-                fi
-              fi
-            done | sort
+            # Generate changelog from conventional commits
+            echo "## Recent Changes"
+            echo ""
+            
+            git log --oneline -20 --pretty=format:"- %s" | while read line; do
+              # Format conventional commits nicely
+              echo "$line" | sed \
+                -e 's/^- feat/- ✨ **feat**/g' \
+                -e 's/^- fix/- 🐛 **fix**/g' \
+                -e 's/^- docs/- 📚 **docs**/g' \
+                -e 's/^- style/- 💄 **style**/g' \
+                -e 's/^- refactor/- ♻️ **refactor**/g' \
+                -e 's/^- perf/- ⚡ **perf**/g' \
+                -e 's/^- test/- 🧪 **test**/g' \
+                -e 's/^- build/- 📦 **build**/g' \
+                -e 's/^- ci/- 👷 **ci**/g' \
+                -e 's/^- chore/- 🔧 **chore**/g'
+            done
             
             echo ""
-            echo "### Momentum Firmware"
-            for fap in release/*_momentum-*.fap; do
-              if [ -f "$fap" ]; then
-                filename=$(basename "$fap")
-                if [[ "$filename" == *"momentum-dev"* ]]; then
-                  echo "- \`$filename\` - Momentum Dev SDK"
-                elif [[ "$filename" == *"momentum-release"* ]]; then
-                  echo "- \`$filename\` - Momentum Release SDK"
-                fi
-              fi
-            done | sort
-            
+            echo ""
+            echo "## Downloads"
+            echo ""
+            echo "| Firmware | Channel | File |"
+            echo "|----------|---------|------|"
+            echo "| Official | Dev | \`guess_the_number_official-dev.fap\` |"
+            echo "| Official | Release | \`guess_the_number_official-release.fap\` |"
+            echo "| Momentum | Dev | \`guess_the_number_momentum-dev.fap\` |"
+            echo "| Momentum | Release | \`guess_the_number_momentum-release.fap\` |"
             echo ""
             echo "---"
             echo ""
-            echo "📦 Download the appropriate file for your firmware version."
+            echo "📦 Download the \`.fap\` file matching your firmware and copy it to \`apps/Games/\` on your Flipper Zero."
           } > release_notes.md
 
           cat release_notes.md
 
-      - name: Create release
-        uses: softprops/action-gh-release@v2.4.1
+      - name: Delete existing latest release
+        run: |
+          gh release delete latest --yes || true
+          git push origin :refs/tags/latest || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create latest release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.prepare.outputs.tag_name }}
-          name: ${{ steps.prepare.outputs.release_name }}
+          tag_name: latest
+          name: "v${{ steps.prepare.outputs.version }} - Latest Build"
           body_path: release_notes.md
           prerelease: false
           files: release/*.fap
-          draft: false
+          make_latest: true
